@@ -12,31 +12,9 @@
 
 原文地址:[More C++ idioms](https://en.wikibooks.org/wiki/More_C%2B%2B_Idioms/Print_Version)
 
-刚刚启步，欢迎一起讨论！
+由于Horky大佬只翻译了几条，也想这几天看看本书学习下，所以就续写下去，Horky原地址git@github.com:HorkyChen/MoreCPlusPlusIdioms.git
 
+参考：
 
-##代码使用说明
-
-使用gitbook作为静态编译输出，需要安装`Node.js`，然后从`npm`安装gitbook
-
-```sh
-npm install gitbook -g
-```
-
-然后git clone下来本书，然后输出静态网页，在浏览器上查看：
-
-```sh
-git clone git@github.com:HorkyChen/MoreCPlusPlusIdioms.git
-cd MoreCPlusPlusIdioms
-gitbook serve .
-```
-
-gitbook会默认在端口`4000`开启服务器，使用浏览器访问[http://localhost:4000/](http://localhost:4000/)就可以访问然后阅读本书的中文翻译。
-
-##基本约定
-欢迎大家一起来翻译、学习。这里简单做一些行文的约定。
-* 使用一致的结构，即各文档中二级目录一致。
-* UML配图，请使用Visual Paradigm，并且将其中各个元件的背景色设为白色。截图前请放大到110%。
-* 鼓励添加译注进行说明。每个idiom中的例子最好实际验证过。
-
+1.（More C++ Idioms C++ 惯常用法总结）https://blog.csdn.net/u010180372/article/details/124995190
 
