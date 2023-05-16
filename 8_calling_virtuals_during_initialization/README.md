@@ -7,7 +7,10 @@
 * Dynamic Binding During Initialization idiom
 
 ##动机
-有时需要在派生类初始化时想要调用派生类的虚函数。C++是禁止这样的操作的，毕竟在派生类初始化完前使用派生类的成员是危险的，如果虚函数不使用正在建构的对象的成员时就不会有什么问题。
+有时需要在派生类初始化时想要调用派生类的虚函数。C++是禁止这样的操作的，毕竟在派生类初始化完前使用派生类的成员是危险的，如果虚函数不使用正在构造的对象的成员，就不会有什么问题。
+
+复习几个问题，vptr（虚表指针）的填充是在 base构造之后， member init 之前进行的 [class.base.init]。因此构造函数中禁止了动态查找和虚函数绑定，此时只会调用自己的虚函数。
+
 ```
  class Base {
  public:
@@ -35,7 +38,7 @@
 ##解决方案及示例
 有几种方式可以达到这个效果，每种方式又都有其优缺点。它们可以分为两类，一类将初始阶段分为两个阶段，另一类则仍然只使用单一初始阶段。
 
-双阶段初始化技术就是将初始化过程分隔出来，当然不是所有的类都可以这样做。分开的初始化过程再通过另一个函数联合在一起，这个函数不一定是成员函数。
+两阶段初始化技术将对象的构造与初始化其状态分离开来，当然不是所有的类都可以这样做。分开的初始化过程再通过另一个函数联合在一起，这个函数不一定是成员函数。
 ```
 class Base {
  public:
@@ -53,7 +56,7 @@ class Base {
 
  class Derived : public Base {
  public:
-   Derived (const char *);
+   Derived (const char*);
    virtual void foo(int n) const;
    virtual double bar() const;
  };
@@ -62,10 +65,10 @@ class Base {
 使用非成员函数的方法:
 ```
 template <class Derived, class Parameter>
-std::auto_ptr <Base> factory (Parameter p)
+std::auto_ptr<Base> factory(Parameter p)
 {
-  std::auto_ptr <Base> ptr (new Derived (p));
-  ptr->init ();
+  std::auto_ptr<Base> ptr(new Derived (p));
+  ptr->init();
   return ptr;
 }
 ```
@@ -75,44 +78,45 @@ std::auto_ptr <Base> factory (Parameter p)
 class Base {
   public:
     template <class D, class Parameter>
-    static std::auto_ptr <Base> Create (Parameter p)
+    static std::auto_ptr<Base> Create(Parameter p)
     {
-       std::auto_ptr <Base> ptr (new D (p));
-       ptr->init ();
+       std::auto_ptr<Base> ptr(new D(p));
+       ptr->init();
        return ptr;
     }
 };
 int main ()
 {
-  std::auto_ptr <Base> b = Base::Create <Derived> ("para");
+  std::auto_ptr<Base> b = Base::Create<Derived>("para");
 }
 ```
 
 基类的建构需要设置为`private`，可以避免用户意外地使用。接口应当保证易于使用，而不容易犯错。然后将工厂方法指定为派生类的友元。如果移到基类内部，就把基类指定为派生类的友元。
 
 保持单一初始化过程的方法:
-前面的方法需要新增辅助类，无疑增加复杂度。将指针传给静态成员方法，也太过C式了。这里可以使用Curiously Recurring Template Pattern惯用法。
+前面的方法需要新增辅助类，无疑增加复杂度。将指针传给静态成员方法，也太过C式了。这里可以使用Curiously Recurring Template Pattern惯用法（用 CRTP 不用虚函数，然后加限定域查找，说实话这代码就丑起来了）
+
 ```
 class Base {
 };
-template <class D>
-class InitTimeCaller : public Base {
+template<class D>
+class InitTimeCaller:public Base {
   protected:
-    InitTimeCaller () {
-       D::foo ();
-       D::bar ();
+    InitTimeCaller(){
+       D::foo();
+       D::bar();
     }
 };
-class Derived : public InitTimeCaller <Derived>
+class Derived : public InitTimeCaller<Derived>
 {
   public:
-    Derived () : InitTimeCaller <Derived> () {
+    Derived():InitTimeCaller<Derived>(){
 		cout << "Derived::Derived()\n";
 	}
-    static void foo () {
+    static void foo() {
 		cout << "Derived::foo()\n";
 	}
-    static void bar () {
+    static void bar() {
 		cout << "Derived::bar()\n";
 	}
 };
