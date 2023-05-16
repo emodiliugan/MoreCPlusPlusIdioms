@@ -1,7 +1,7 @@
-# 初始化过程调用虚函数 (Calling Virtuals During Initialization)
+# 初始化期间调用虚函数 (Calling Virtuals During Initialization)
 
 ##目的
-在初始过程模仿调用虚函数。
+在初始过程模拟调用虚函数。
 
 ##别名
 * Dynamic Binding During Initialization idiom
