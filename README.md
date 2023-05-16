@@ -12,7 +12,7 @@
 
 原文地址:[More C++ idioms](https://en.wikibooks.org/wiki/More_C%2B%2B_Idioms/Print_Version)
 
-由于Horky大佬只翻译了几条，也想这几天看看本书学习下，所以就续写下去，Horky原地址git@github.com:HorkyChen/MoreCPlusPlusIdioms.git
+由于Horky大佬翻译了几条，最近想这几天看看本老书学习下，虽然里面很多的条款可能已经过时，但是可以活跃下大脑，所以就续写下去，Horky原地址git@github.com:HorkyChen/MoreCPlusPlusIdioms.git
 
 参考：
 
