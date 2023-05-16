@@ -57,8 +57,8 @@ class List{
 public:
 
 friend bool operator==(const List<T>& lft,
-					  const List<T>& rgt){
-					  //....
+		const List<T>& rgt){
+	 //....
 	}
 }；
 ```
