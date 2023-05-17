@@ -5,12 +5,13 @@
 ##别名
 
 ##动机
-C++允许通过delete删除一个指向未完整定义的类(Incomplete class)的指针。如果类有一个较重的析构函数，或者有一个delete运算符重载，这个行为就是未定义的。有些编译器会对这些情况报警，但程序往往会忽略或者屏蔽这些警告。
-**译注**：所谓Incomplete class, 指未能完整定义，无法确定其最终size的类，比如:
+C++允许通过delete删除一个指向未完整定义的类(Incomplete class)的指针。如果类有一个[非平凡的析构函数](https://zhuanlan.zhihu.com/p/434531482)，或者有一个delete运算符重载，这个行为就是未定义的。有些编译器会对这些情况报警，但程序往往会忽略或者屏蔽这些警告。
+**译注**：所谓Incomplete class, 指未能完整定义，无法确定其最终size的类，在某个作用域中声明了一个类但没有完全定义该类，比如:
+
 ```
 class A{
-    private:
-        A a;  // 没有提前声明Class A;
+private:
+   A a;//没有提前声明Class A;
 }
 ```
 
@@ -54,22 +55,25 @@ int main() {
 }
 ```
 
+
+
 ##解决方案及示例
 此惯用法为解决这个问题，不再直接调用`delete`,而是调用一个函数模板去清理内存。
 
 下面是Boost工具库中boost::checked_delete的实现。 它借助`sizeof()`触发编译错误，这也是编译期进行断言的一类做法。如果`T`声明了但没有定义，`sizeof(T)`就会出现编译错误或者返回0，具体行为依赖于编译器。如果`sizeof(T)`返回0， checked_delete就会因为声明一个-1大小的数组而触发编译错误。数组名·`type_must_be_complete`会出现在错误消息中以帮助说明问题。
 ```
 template<class T>
-inline void checked_delete(T * x)
+inline void checked_delete(T* x)
 {
     typedef char type_must_be_complete[ sizeof(T)? 1: -1 ];
     (void) sizeof(type_must_be_complete);
     delete x;
 }
+
 template<class T>
-struct checked_deleter : std::unary_function <T *, void>
+struct checked_deleter:std::unary_function<T*,void>
 {
-    void operator()(T * x) const
+    void operator()(T* x) const
     {
         boost::checked_delete(x);
     }
@@ -86,4 +90,8 @@ struct checked_deleter : std::unary_function <T *, void>
 
 ##参考
 http://www.boost.org/libs/utility/checked_delete.html
+
+[什么是非平凡(non-trivial)构造函数](https://zhuanlan.zhihu.com/p/434531482)
+
+
 
