@@ -13,7 +13,7 @@
 class B {};
 class D : public B {};
 template <class T>
-class Helper {};
+class Helper{};
 
 B *bptr;
 D *dptr;
@@ -23,7 +23,7 @@ Helper<B> hb;
 Helper<D> hd;
 hb = hd; // 虽然有价值，但是禁止这样做
 ```
-在很多情况下，这种转换是有用的。比如从`std::auto_ptr<D>`转换到`std::auto_ptr<B>`，这看起来很自然，但是C++不支持。这也是本惯用法所要解决的。
+在很多情况下，这种转换是有用的。比如从`std::auto_ptr<D>`转换到`std::auto_ptr<B>`，这看起来很自然，但是C++不支持（C++ 默认支持子类到父类指针转换，但是不支持模板的）。这也是本惯用法所要解决的。
 
 ##解决方案及示例
 在模板类中定义成员模板(member template)方法用来完成参数类型所需要的隐式类型转换。在下面的例子中，模板建议函数和重载的赋值操作可以支持任何类型的U, 它支持从`T*`初始化或赋值给一个`U*`。
@@ -32,25 +32,25 @@ template <class T>
 class Ptr
 {
   public:
-    Ptr () {}
+    Ptr(){}
 
-    Ptr (Ptr const & p)
-      : ptr (p.ptr)
+    Ptr(Ptr const & p)
+      : ptr(p.ptr)
     {
       std::cout << "Copy constructor\n";
     }
 
     // 通过成员模板支持隐性类型转换。
     // 这不是copy建构函数，只是有点相似。
-    template <class U>
-    Ptr (Ptr <U> const & p)
-      : ptr (p.ptr) // 需要隐式地从U转到T。
+    template<class U>
+    Ptr(Ptr<U> const & p)
+      : ptr(p.ptr) // 需要隐式地从U转到T。
     {
       std::cout << "Coercing member template constructor\n";
     }
 
     // 拷贝赋值运算符重载
-    Ptr & operator = (Ptr const & p)
+    Ptr& operator=(Ptr const & p)
     {
       ptr = p.ptr;
       std::cout << "Copy assignment operator\n";
@@ -60,10 +60,10 @@ class Ptr
     // 通过成员模板的赋值运算符支持隐式转换。
     // 这个也不是拷贝赋值运算符重载函数，只是相似。
     template <class U>
-    Ptr & operator = (Ptr <U> const & p)
+    Ptr& operator=(Ptr<U> const & p)
     {
       ptr = p.ptr; // 需要从U到T的隐式转换。
-      std::cout << "Coercing member template assignment operator\n";
+      std::cout << "Coercing member template assignment 								operator\n";
       return *this;
     }
 
@@ -72,35 +72,36 @@ class Ptr
 
 int main (void)
 {
-   Ptr <D> d_ptr;
-   Ptr <B> b_ptr (d_ptr); // 支持了
+   Ptr<D> d_ptr;
+   Ptr<B> b_ptr(d_ptr); // 支持了
    b_ptr = d_ptr;         // 支持了
 }
 ```
 
 另一个应用是允许将一个派生类指针数据赋值到指向基类的指针数组。再假如D继承自B, 一个D对象也是一个B对象，它们是is-a的关系。但是，一个D对象的数组并不是B对象的数组。C++不支持这种情况。如果能解开这个限制当然也是非常有用的。只是要特别注意将基类的指针数组复制给其派生类的数组。同样使用成员模板函数的特化可以解决这个问题。
-下面的例子中使用了参数为`Array<U *>`的模板建构函数和赋值运算符重载函数。
+下面的例子中使用了参数为`Array<U*>`的模板建构函数和赋值运算符重载函数。
+
 ```
 template <class T>
 class Array
 {
   public:
-    Array () {}
-    Array (Array const & a)
+    Array(){}
+    Array(Array const& a)
     {
-      std::copy (a.array_, a.array_ + SIZE, array_);
+      std::copy(a.array_, a.array_ + SIZE, array_);
     }
 
-    template <class U>
-    Array (Array <U *> const & a)
+    template<class U>
+    Array(Array<U*> const& a)
     {
-      std::copy (a.array_, a.array_ + SIZE, array_);
+      std::copy(a.array_, a.array_ + SIZE, array_);
     }
 
-    template <class U>
-    Array & operator = (Array <U *> const & a)
+    template<class U>
+    Array& operator=(Array<U*> const & a)
     {
-      std::copy (a.array_, a.array_ + SIZE, array_);
+      std::copy(a.array_, a.array_ + SIZE, array_);
     }
 
     enum { SIZE = 10 };
