@@ -1,30 +1,36 @@
 # 复制与交换 (Copy-and-swap)
 ##目的
-创建对异常安全的赋值运算符重载。
+创建一个异常安全的赋值运算符重载。
 
 ##别名
 Create-Temporary-and-Swap
 
 ##动机
-异常安全(Exception safety)是构建高度安全的C++软件的重要基石，它使用异常(exceptions)来表示不正常的的事件。至少有三种异常安全性级别:基本(basic)、强(strong)和no-throw。一般使用基本异常，毕间实现简单。强异常安全在一些情况下并不适用。本惯用法就是为了让赋值操作值能够以强异常安全的方式实现。
+异常安全(Exception safety)是构建高度安全的C++软件的重要基石，它使用异常(exceptions)来表示异常的事件。至少有三种异常安全性级别:基本(basic)、强(strong)和no-throw。一般使用基本异常，毕竟实现简单。强异常安全在一些情况下并不适用。
+
+**本惯用法就是为了让赋值操作值能够以强异常安全的方式实现。**
 
     关于异常安全性的三种类型 (《Effective C++》中Item 29):
     * 基本承诺
     如果异常抛出，程序内的任何事物仍然保持在有效状态下。没有任何对象或数据结构会因此而败坏，所有对象都处于一种内部前后一致的状态。但是程序的状态可能无法预料。
+    举个例子，我们可以撰写 changeBackground使得一旦有异常被抛出时，PrettyMenu对象可以继续拥有原背景图像，或是令它拥有某个缺省背景图像，但客户无法预期哪一种情况。如果想知道，他们恐怕必须调用某个成员函数以得知当时的背景图像是什么。
+    
     * 强烈保证
     如果异常抛出，程序状态不改变。调用这样的函数需有这样的认知:如果函数成功，就是完全成功，如果函数失败，程序会恢复到调用函数之前的状态。
+    和这种提供强烈保证的函数共事，比和刚才说的那种只提供基本承诺的函数共事，容易多了，因为在调用一个提供强烈保证的函数后，程序状态只有两种可能：如预期般地到达函数成功执行后的状态，或回到函数被调用前的状态。与此成对比的是，如果调用一个只提供基本承诺的函数，而真的出现异常，程序有可能处于任何状态——只要那是个合法状态。
+    
     * 不抛掷保证
     承诺绝不抛出异常，因为它们总是能够完成它们原先承诺的功能。作用于内置类型身上的所有操作都提供nothrow保证。
 
-
 ##解决方案及示例
 使用本惯用法会在丢掉当前资源之前取得新资源。其中使用RAII惯用法获取资源，如果成功获取资源，再使用non-throwing swap idiom(无异常swap惯用法)。最终，旧资源在RAII的副作用下被释放掉。
+
 ```
 class String
 {
-    char * str;
+    char* str;
 public:
-    String & operator=(const String & s)
+    String& operator=(const String & s)
     {
         String temp(s); // 拷贝建构 -- RAII
         temp.swap(*this); // 无异常swap
@@ -61,8 +67,29 @@ public:
 };
 ```
 
+**补充知识**：
+
+throw()和noexcept都是C++中的异常规范，用来指示函数是否会抛出异常。它们的区别如下：
+
+- throw()是C++03中的语法，noexcept是C++11中引入的新语法，用来替代throw()。
+
+- throw()可以接受一个类型列表，表示函数可以抛出的异常类型，例如throw(int,double)。但这种用法在C++11中已经被弃用，并在C++17中被删除。如果throw()不接受任何参数，表示函数不会抛出任何异常，例如throw()。这种用法在C++17中被noexcept(true)取代。
+
+- noexcept可以接受一个常量表达式，表示函数是否可能抛出异常，例如noexcept(true)或noexcept(false)。如果noexcept不接受任何参数，表示函数不会抛出任何异常，相当于noexcept(true)。
+
+- 当一个函数被声明为throw()或noexcept(true)时，如果函数试图抛出异常，程序的行为是不同的。在C++14及更早的版本中，throw()会调用std::unexpected函数，而noexcept(true)会调用std::terminate函数。在C++17及更高的版本中，throw()和noexcept(true)都会调用std::terminate函数。
+
+- noexcept可以增强泛型编程的能力，因为它可以根据模板参数的表达式来决定函数是否是noexcept的。例如，template void fun () noexcept (noexcept (T ())) {}就是一个根据T()表达式是否可能抛出异常来决定fun()是否是noexcept的模板函数。
+
+  具体的更多细节可以参考：
+
+  [noexcept关键字](https://zhuanlan.zhihu.com/p/196164710)
+
+  [C++03 throw()说明符 C++11 noexcept之间的区别](https://qastack.cn/programming/12833241/difference-between-c03-throw-specifier-c11-noexcept)
+
 **拷贝省略(copy ellsion)和copy-and-swap惯用法**
 严格来说，在赋值操作中显示地创建临时对象是不需要的。赋值操作的右参形式的参数可以通过以值的形式传递到函数。这个参数本身就是临时变量。
+
 ```
 String & operator = (String s) // 以值传递的参数s就是临时变量
 {
