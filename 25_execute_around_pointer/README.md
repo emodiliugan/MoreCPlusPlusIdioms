@@ -165,4 +165,7 @@ int main()
 
 ##已知的应用
 ##相关的惯用法
+
+[Smart Pointer](https://en.wikibooks.org/wiki/More%20C%252B%252B%20Idioms%2FSmart%20Pointer)
+
 ##参考
